@@ -1,2 +1,7 @@
 .env
 .env.local
+.history
+node_modules
+.env.local
+.env*.local
+package-lock.json
