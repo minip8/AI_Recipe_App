@@ -1,12 +1,14 @@
 "use client";
 import { useState, useRef, useCallback } from "react";
 import Link from "next/link";
+import { useAuth } from "./components/AuthProvider";
 
 const DIETARY_MODES = ["maintain", "bulk", "cut", "vegetarian", "vegan", "keto"];
 const COMMON_ALLERGIES = ["Gluten", "Dairy", "Nuts", "Eggs", "Soy", "Shellfish"];
 const RELIGIOUS_DIETS = ["Halal", "Kosher", "Hindu Vegetarian", "Jain", "Buddhist"];
 
 export default function Home() {
+  const { user, session } = useAuth();
   const [image, setImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [ingredients, setIngredients] = useState([]);
@@ -98,13 +100,17 @@ export default function Home() {
     setStep("generating");
     setError(null);
     try {
+      const headers = { "Content-Type": "application/json" };
+      if (session?.access_token) {
+        headers.Authorization = `Bearer ${session.access_token}`;
+      }
       const res = await fetch("/api/generate", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({
           ingredients,
           profile: { dietary_mode: dietaryMode, allergies, religious_diet: religiousDiet },
-          share: shareRecipe,
+          share: shareRecipe && Boolean(user),
         }),
       });
       const data = await res.json();
@@ -429,10 +435,6 @@ export default function Home() {
             <div className="logo-icon">🧊</div>
             <span className="logo-name">Fridge<em>IQ</em></span>
           </div>
-          <div className="flex gap-4">
-            <Link href="/feed" className="text-blue-500 hover:underline">Browse shared recipes</Link>
-            <Link href="/create-recipe" className="text-green-500 hover:underline">Create custom recipe</Link>
-          </div>
           {step !== "upload" && (
             <button className="back-btn" onClick={reset}>← Start over</button>
           )}
@@ -608,11 +610,17 @@ export default function Home() {
                   checked={shareRecipe}
                   onChange={(e) => setShareRecipe(e.target.checked)}
                   className="rounded"
+                  disabled={!user}
                 />
-                <span>Share this recipe with the community</span>
+                <span>
+                  Share this recipe with the community
+                  {!user ? " (login to share)" : ""}
+                </span>
               </label>
             </div>
-            <button className="btn-primary" onClick={generateRecipe}>Generate my recipe →</button>
+            <button className="btn-primary" onClick={generateRecipe}>
+              Generate my recipe →
+            </button>
           </div>
         )}
 
