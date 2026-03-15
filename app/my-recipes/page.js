@@ -566,7 +566,4 @@ export default function MyRecipes() {
             <p>Share your first recipe with the community!</p>
           </div>
         )}
-      </div>
-    </>
-  )
-}
+      }
