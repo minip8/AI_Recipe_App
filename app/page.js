@@ -1,5 +1,6 @@
 "use client";
 import { useState, useRef, useCallback } from "react";
+import Link from "next/link";
 
 const DIETARY_MODES = ["maintain", "bulk", "cut", "vegetarian", "vegan", "keto"];
 const COMMON_ALLERGIES = ["Gluten", "Dairy", "Nuts", "Eggs", "Soy", "Shellfish"];
@@ -13,6 +14,7 @@ export default function Home() {
   const [allergies, setAllergies] = useState([]);
   const [step, setStep] = useState("upload");
   const [error, setError] = useState(null);
+  const [shareRecipe, setShareRecipe] = useState(false);
   const [dragging, setDragging] = useState(false);
   const fileInputRef = useRef(null);
 
@@ -69,6 +71,7 @@ export default function Home() {
         body: JSON.stringify({
           ingredients,
           profile: { dietary_mode: dietaryMode, allergies },
+          share: shareRecipe,
         }),
       });
       const data = await res.json();
@@ -144,14 +147,14 @@ export default function Home() {
           background-size: 160px;
         }
 
-        .page {
-          position: relative;
-          z-index: 2;
-          max-width: 900px;
-          margin: 0 auto;
-          padding: 0 48px 100px;
-        }
 
+ .page {
+  position: relative;
+  z-index: 2;
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 0 32px 100px;
+}
         header {
           display: flex;
           align-items: center;
@@ -174,11 +177,11 @@ export default function Home() {
         }
 
         .logo-name {
-          font-family: 'Instrument Serif', serif;
-          font-size: 24px;
-          letter-spacing: -0.4px;
-          color: #eeeae3;
-        }
+  font-family: 'Instrument Serif', serif;
+  font-size: 32px;
+  letter-spacing: -0.4px;
+  color: #eeeae3;
+}
 
         .logo-name em { font-style: normal; color: #4ade80; }
 
@@ -198,13 +201,13 @@ export default function Home() {
         .hero { margin-bottom: 52px; }
 
         .hero h1 {
-          font-family: 'Instrument Serif', serif;
-          font-size: clamp(52px, 7vw, 80px);
-          line-height: 1.0;
-          letter-spacing: -2px;
-          margin-bottom: 16px;
-          color: #eeeae3;
-        }
+  font-family: 'Instrument Serif', serif;
+  font-size: clamp(40px, 5vw, 60px);
+  line-height: 1.0;
+  letter-spacing: -2px;
+  margin-bottom: 16px;
+  color: #eeeae3;
+}
 
         .hero h1 em {
           font-style: italic;
@@ -499,6 +502,30 @@ export default function Home() {
             <div className="logo-icon">🧊</div>
             <span className="logo-name">Fridge<em>IQ</em></span>
           </div>
+          <div style={{ display: "flex", gap: "12px" }}>
+  <Link href="/feed" style={{
+    padding: "14px 32px", fontSize: "15px",
+    border: "1px solid rgba(238,234,227,0.2)",
+    color: "rgba(238,234,227,0.7)", fontSize: "15px",
+    textDecoration: "none", transition: "all 0.2s",
+    fontFamily: "'DM Sans', sans-serif", fontWeight: 500,
+    letterSpacing: "-0.2px"
+  }}
+  onMouseEnter={e => { e.target.style.borderColor = "rgba(238,234,227,0.5)"; e.target.style.color = "#eeeae3"; }}
+  onMouseLeave={e => { e.target.style.borderColor = "rgba(238,234,227,0.2)"; e.target.style.color = "rgba(238,234,227,0.7)"; }}
+  >Browse recipes</Link>
+  <Link href="/create-recipe" style={{
+    padding: "14px 32px", fontSize: "15px",
+    border: "1px solid rgba(238,234,227,0.2)",
+    color: "rgba(238,234,227,0.7)", fontSize: "15px",
+    textDecoration: "none", transition: "all 0.2s",
+    fontFamily: "'DM Sans', sans-serif", fontWeight: 500,
+    letterSpacing: "-0.2px"
+  }}
+  onMouseEnter={e => { e.target.style.borderColor = "rgba(238,234,227,0.5)"; e.target.style.color = "#eeeae3"; }}
+  onMouseLeave={e => { e.target.style.borderColor = "rgba(238,234,227,0.2)"; e.target.style.color = "rgba(238,234,227,0.7)"; }}
+  >Create recipe</Link>
+</div>
           {step !== "upload" && (
             <button className="back-btn" onClick={reset}>← Start over</button>
           )}
@@ -522,8 +549,19 @@ export default function Home() {
                 <>
                   <img src={imagePreview} alt="Fridge" className="preview-img" />
                   <div className="preview-overlay">
-                    <span className="preview-badge">✓ Photo ready — click Scan to continue</span>
-                  </div>
+  <span className="preview-badge">✓ Photo ready — click Scan to continue</span>
+  <button
+    onClick={(e) => { e.stopPropagation(); setImage(null); setImagePreview(null); }}
+    style={{
+      position: "absolute", top: 12, right: 12,
+      background: "rgba(6,6,8,0.75)", border: "1px solid rgba(238,234,227,0.15)",
+      color: "rgba(238,234,227,0.7)", borderRadius: "100px",
+      padding: "6px 14px", fontSize: "13px", cursor: "pointer"
+    }}
+  >
+    ✕ Remove
+  </button>
+</div>
                 </>
               ) : (
                 <div className="dropzone-inner">
@@ -534,7 +572,7 @@ export default function Home() {
               )}
             </div>
 
-            <input ref={fileInputRef} type="file" accept="image/*" onChange={(e) => handleImage(e.target.files[0])} />
+            <input ref={fileInputRef} type="file" accept="image/*" onChange={(e) => handleImage(e.target.files[0])} onClick={(e) => { e.target.value = null; }} />
 
             <button className="btn-upload" onClick={() => fileInputRef.current.click()}>
               📁 Upload photo
@@ -590,6 +628,17 @@ export default function Home() {
               ))}
             </div>
             {error && <p className="error">{error}</p>}
+            <div className="mb-4">
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={shareRecipe}
+                  onChange={(e) => setShareRecipe(e.target.checked)}
+                  className="rounded"
+                />
+                <span>Share this recipe with the community</span>
+              </label>
+            </div>
             <button className="btn-primary" onClick={generateRecipe}>Generate my recipe →</button>
           </div>
         )}
@@ -641,6 +690,12 @@ export default function Home() {
 
             {typeof recipe === "string" && <p className="recipe-raw">{recipe}</p>}
             {recipe.raw && <p className="recipe-raw">{recipe.raw}</p>}
+
+            {recipe.sharedId && (
+              <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+                <p className="text-green-800">✅ Recipe shared! <a href={`/shared/${recipe.sharedId}`} className="underline">View shared recipe</a></p>
+              </div>
+            )}
 
             <button className="btn-primary" onClick={reset}>🔄 Scan another fridge</button>
             <button className="btn-ghost" onClick={reset}>Start over</button>
