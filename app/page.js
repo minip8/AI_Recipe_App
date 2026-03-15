@@ -1,12 +1,14 @@
 "use client";
 import { useState, useRef, useCallback } from "react";
 import Link from "next/link";
+import { useAuth } from "./components/AuthProvider";
 
 const DIETARY_MODES = ["maintain", "bulk", "cut", "vegetarian", "vegan", "keto"];
 const COMMON_ALLERGIES = ["Gluten", "Dairy", "Nuts", "Eggs", "Soy", "Shellfish"];
 const RELIGIOUS_DIETS = ["Halal", "Kosher", "Hindu Vegetarian", "Jain", "Buddhist"];
 
 export default function Home() {
+  const { user } = useAuth();
   const [image, setImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [ingredients, setIngredients] = useState([]);
@@ -425,37 +427,52 @@ export default function Home() {
 
       <div className="page">
         <header>
-          <div className="logo">
-            <div className="logo-icon">🧊</div>
-            <span className="logo-name">Fridge<em>IQ</em></span>
-          </div>
+          <button onClick={reset} style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+            <div className="logo">
+              <div className="logo-icon">🧊</div>
+              <span className="logo-name">Fridge<em>IQ</em></span>
+            </div>
+          </button>
           <div style={{ display: "flex", gap: "12px" }}>
             <Link href="/feed" style={{
-              padding: "14px 32px", fontSize: "15px",
+              padding: "14px 20px", fontSize: "15px",
               border: "1px solid rgba(238,234,227,0.2)",
               color: "rgba(238,234,227,0.7)",
               textDecoration: "none", transition: "all 0.2s",
               fontFamily: "'DM Sans', sans-serif", fontWeight: 500,
-              letterSpacing: "-0.2px", borderRadius: "100px"
+              letterSpacing: "-0.2px", borderRadius: "100px",
+              flexShrink: 0
             }}
             onMouseEnter={e => { e.target.style.borderColor = "rgba(238,234,227,0.5)"; e.target.style.color = "#eeeae3"; }}
             onMouseLeave={e => { e.target.style.borderColor = "rgba(238,234,227,0.2)"; e.target.style.color = "rgba(238,234,227,0.7)"; }}
             >Browse recipes</Link>
             <Link href="/create-recipe" style={{
-              padding: "14px 32px", fontSize: "15px",
+              padding: "14px 20px", fontSize: "15px",
               border: "1px solid rgba(238,234,227,0.2)",
               color: "rgba(238,234,227,0.7)",
               textDecoration: "none", transition: "all 0.2s",
               fontFamily: "'DM Sans', sans-serif", fontWeight: 500,
-              letterSpacing: "-0.2px", borderRadius: "100px"
+              letterSpacing: "-0.2px", borderRadius: "100px",
+              flexShrink: 0
             }}
             onMouseEnter={e => { e.target.style.borderColor = "rgba(238,234,227,0.5)"; e.target.style.color = "#eeeae3"; }}
             onMouseLeave={e => { e.target.style.borderColor = "rgba(238,234,227,0.2)"; e.target.style.color = "rgba(238,234,227,0.7)"; }}
             >Create recipe</Link>
+            {user && (
+              <Link href="/my-recipes" style={{
+                padding: "14px 20px", fontSize: "15px",
+                border: "1px solid rgba(238,234,227,0.2)",
+                color: "rgba(238,234,227,0.7)",
+                textDecoration: "none", transition: "all 0.2s",
+                fontFamily: "'DM Sans', sans-serif", fontWeight: 500,
+                letterSpacing: "-0.2px", borderRadius: "100px",
+                flexShrink: 0
+              }}
+              onMouseEnter={e => { e.target.style.borderColor = "rgba(238,234,227,0.5)"; e.target.style.color = "#eeeae3"; }}
+              onMouseLeave={e => { e.target.style.borderColor = "rgba(238,234,227,0.2)"; e.target.style.color = "rgba(238,234,227,0.7)"; }}
+              >My recipes</Link>
+            )}
           </div>
-          {step !== "upload" && (
-            <button className="back-btn" onClick={reset}>← Start over</button>
-          )}
         </header>
 
         {step === "upload" && (
