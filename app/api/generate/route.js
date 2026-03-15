@@ -14,7 +14,8 @@ function cleanJSON(str) {
 
 export async function POST(request) {
   try {
-    const { ingredients, profile, share } = await request.json()
+    const { ingredients, profile, share, excludeTitle } = await request.json()
+
 
     const response = await groq.chat.completions.create({
       model: "llama-3.3-70b-versatile",
@@ -24,6 +25,8 @@ export async function POST(request) {
           content: `You are a personal chef AI. Generate a single recipe using the provided ingredients.
           Dietary mode: ${profile?.dietary_mode || "none"}
           Allergies to avoid: ${profile?.allergies?.join(", ") || "none"}
+          ${excludeTitle ? `Do NOT make "${excludeTitle}" or anything similar. Be creative and suggest something completely different.` : ""}
+
           
           You MUST respond with ONLY a valid JSON object, no extra text, no markdown, no backticks.
           Use this exact structure:

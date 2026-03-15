@@ -98,6 +98,29 @@ export default function Home() {
       setStep("ingredients");
     }
   };
+  const regenerateRecipe = async () => {
+  setStep("generating");
+  setError(null);
+  try {
+    const res = await fetch("/api/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ingredients,
+        profile: { dietary_mode: dietaryMode, allergies },
+        share: false,
+        excludeTitle: recipe?.title,
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Generation failed");
+    setRecipe(data);
+    setStep("recipe");
+  } catch (e) {
+    setError(e.message);
+    setStep("recipe");
+  }
+};
 
   const reset = () => {
     setImage(null);
@@ -749,26 +772,73 @@ export default function Home() {
               <h1>Found <em>{ingredients.length}</em><br />ingredients</h1>
               <p>Looking good — ready to generate your recipe?</p>
             </div>
+            <p style={{ fontSize: "13px", color: "rgba(238,234,227,0.3)", marginBottom: "16px" }}>
+  Missed anything? Click any ingredient to edit, or add below.
+</p>
             <div className="ingredients-grid">
-              {ingredients.map((ing, i) => (
-                <div className="ingredient-card" key={i} style={{ animationDelay: `${i * 35}ms` }}>
-                  <div className="ing-dot" />
-                  <span>{typeof ing === "string" ? ing : `${ing.name}${ing.quantity ? ` · ${ing.quantity}${ing.unit || ""}` : ""}`}</span>
-                </div>
-              ))}
-            </div>
+  {ingredients.map((ing, i) => (
+    <div className="ingredient-card" key={i} style={{ animationDelay: `${i * 35}ms`, justifyContent: "space-between" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1 }}>
+        <div className="ing-dot" />
+        <input
+          defaultValue={typeof ing === "string" ? ing : ing.name}
+          onChange={(e) => {
+            const updated = [...ingredients];
+            updated[i] = typeof ing === "string" ? e.target.value : { ...ing, name: e.target.value };
+            setIngredients(updated);
+          }}
+          style={{
+            background: "none", border: "none", outline: "none",
+            color: "rgba(238,234,227,0.7)", fontSize: "13px",
+            fontFamily: "'DM Sans', sans-serif", width: "100%",
+            textTransform: "capitalize"
+          }}
+        />
+      </div>
+      <button
+        onClick={() => setIngredients(ingredients.filter((_, j) => j !== i))}
+        style={{
+          background: "none", border: "none", color: "rgba(238,234,227,0.25)",
+          cursor: "pointer", fontSize: "14px", padding: "0 0 0 8px", flexShrink: 0
+        }}
+      >✕</button>
+    </div>
+  ))}
+</div>
             {error && <p className="error">{error}</p>}
-            <div className="mb-4">
-              <label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={shareRecipe}
-                  onChange={(e) => setShareRecipe(e.target.checked)}
-                  className="rounded"
-                />
-                <span>Share this recipe with the community</span>
-              </label>
-            </div>
+            <div className="manual-input-row" style={{ marginBottom: "24px" }}>
+  <input
+    className="manual-input"
+    type="text"
+    value={manualInput}
+    onChange={(e) => setManualInput(e.target.value)}
+    onKeyDown={(e) => { if (e.key === "Enter") {
+      if (manualInput.trim()) {
+        setIngredients([...ingredients, { name: manualInput.trim(), quantity: "1", unit: "" }]);
+        setManualInput("");
+      }
+    }}}
+    placeholder="Add a missing ingredient..."
+  />
+  <button className="btn-add" onClick={() => {
+    if (manualInput.trim()) {
+      setIngredients([...ingredients, { name: manualInput.trim(), quantity: "1", unit: "" }]);
+      setManualInput("");
+    }
+  }}>+ Add</button>
+</div>
+
+<div className="mb-4">
+  <label className="flex items-center gap-2">
+    <input
+      type="checkbox"
+      checked={shareRecipe}
+      onChange={(e) => setShareRecipe(e.target.checked)}
+      className="rounded"
+    />
+    <span>Share this recipe with the community</span>
+  </label>
+</div>
             <button className="btn-primary" onClick={generateRecipe}>Generate my recipe →</button>
           </div>
         )}
@@ -821,14 +891,38 @@ export default function Home() {
             {typeof recipe === "string" && <p className="recipe-raw">{recipe}</p>}
             {recipe.raw && <p className="recipe-raw">{recipe.raw}</p>}
 
-            {recipe.sharedId && (
-              <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-                <p className="text-green-800">✅ Recipe shared! <a href={`/shared/${recipe.sharedId}`} className="underline">View shared recipe</a></p>
-              </div>
-            )}
-
+           {!recipe.sharedId ? (
+  <button className="btn-ghost" onClick={async () => {
+    try {
+      const res = await fetch("/api/recipes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: recipe.title,
+          description: recipe.description,
+          prepTime: recipe.prepTime,
+          cookTime: recipe.cookTime,
+          servings: recipe.servings,
+          ingredients: recipe.ingredients,
+          steps: recipe.steps,
+        }),
+      });
+      const data = await res.json();
+      if (data.id) setRecipe({ ...recipe, sharedId: data.id });
+    } catch (e) { console.error(e); }
+  }}>📤 Share this recipe</button>
+) : (
+  <div style={{
+    marginBottom: "16px", padding: "14px 20px",
+    background: "rgba(74,222,128,0.08)", border: "1px solid rgba(74,222,128,0.25)",
+    borderRadius: "14px", color: "#4ade80", fontSize: "14px"
+  }}>
+    ✅ Shared! <a href={`/shared/${recipe.sharedId}`} style={{ color: "#4ade80", textDecoration: "underline" }}>View it here →</a>
+  </div>
+)}
             <button className="btn-primary" onClick={reset}>🔄 Scan another fridge</button>
-            <button className="btn-ghost" onClick={reset}>Start over</button>
+<button className="btn-ghost" onClick={regenerateRecipe}>✨ Try a different recipe</button>
+<button className="btn-ghost" onClick={reset}>Start over</button>
           </div>
         )}
       </div>
